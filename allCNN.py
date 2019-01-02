@@ -274,7 +274,7 @@ with tf.name_scope("train"):
     true_loss = tf.reduce_mean(xentropy)
     reg_loss = reg_constant*tf.losses.get_regularization_loss()
     loss = true_loss + reg_loss
-    optimizer = tf.train.AdamOptimizer()
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.1)
     training_op = optimizer.minimize(loss)
 
 with tf.name_scope("eval"):
@@ -294,24 +294,22 @@ S_curr = 0
 with tf.Session() as sess:
     init.run()
     for epoch in range(n_epochs):
-        #ctr = -1
-        for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+        for ctr, (X_batch, y_batch) in enumerate(shuffle_batch(X_train, y_train, batch_size)):
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-            #ctr += 1
             #if ctr%100 == 0:
-                #xentropy_result, reg_loss_result, true_loss_result, loss_result, logits_result, y_prob_result, correct_result, accuracy_result = sess.run([xentropy, reg_loss, true_loss, loss, logits, y_prob, correct, accuracy], feed_dict = {X: X_batch, y: y_batch})
-                #pred_cat = [np.where(y_prob_result[i, :] == np.max(y_prob_result[i, :]))[0][0] for i in range(100)]
-                #for i in range(100):
-                #    print("pred_cat: ", pred_cat[i], "true_cat: ", y_batch[i])
-                #print("loss: ", loss_result)
-                #pdb.set_trace()
+            #    xentropy_result, reg_loss_result, true_loss_result, loss_result, logits_result, y_prob_result, correct_result, accuracy_result = sess.run([xentropy, reg_loss, true_loss, loss, logits, y_prob, correct, accuracy], feed_dict = {X: X_batch, y: y_batch})
+            #    pred_cat = [np.where(y_prob_result[i, :] == np.max(y_prob_result[i, :]))[0][0] for i in range(100)]
+            #    for i in range(100):
+            #        print("pred_cat: ", pred_cat[i], "true_cat: ", y_batch[i])
+            #    print("loss: ", loss_result)
+            #    pdb.set_trace()
         #xentropy_result, reg_loss_result, true_loss_result, loss_result, logits_result, y_prob_result, correct_result, accuracy_result = sess.run([xentropy, reg_loss, true_loss, loss, logits, y_prob, correct, accuracy], feed_dict = {X: X_batch, y: y_batch})
         loss_batch = loss.eval(feed_dict={X: X_batch, y: y_batch})
         loss_valid = loss.eval(feed_dict={X: X_valid, y: y_valid})
         acc_batch = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
         acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
         print("Epoch: %d; Train loss: %+4.3e; Train acc: %+3.2e; Valid loss: %+4.3e; Valid acc: %+3.2e"%(epoch, loss_batch, acc_batch, loss_valid, acc_valid))
-        pdb.set_trace()
+        #pdb.set_trace()
         save_path = saver.save(sess, "./allCNN_model")
         lossSummaryStr = lossSummary.eval(feed_dict={X: X_batch, y: y_batch})
         accuracySummaryStr = accuracySummary.eval(feed_dict={X: X_batch, y: y_batch})
