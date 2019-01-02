@@ -1,0 +1,3 @@
+allCNN_model.*
+checkpoint
+logs/*

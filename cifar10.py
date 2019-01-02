@@ -1,0 +1,152 @@
+import numpy as np
+import tensorflow as tf
+import datetime
+import pdb
+
+
+(X_train, y_train), (X_test, y_test) = tf.keras.datasets.cifar10.load_data()
+(X_train_mnist, y_train_mnist), (X_test_mnist, y_test_mnist) = tf.keras.datasets.mnist.load_data()
+
+height = X_train.shape[1]
+width = X_train.shape[2]
+channels = X_train.shape[3]
+n_inputs = height*width*channels
+
+seed = 42
+
+conv1_fmaps = 64
+conv1_ksize = 3
+conv1_stride = 1
+conv1_pad = "SAME"
+
+conv2_fmaps = 128
+conv2_ksize = 3
+conv2_stride = 2
+conv2_pad = "SAME"
+
+pool3_fmaps = conv2_fmaps
+pool3_pool_size = [2, 2]
+pool3_strides = [2, 2]
+pool3_padding = "VALID"
+pool3_fmaps_mul = 8
+
+n_fc1 = 512
+n_fc2 = 256
+n_fc3 = 128
+n_outputs = 10
+
+n_epochs = 100
+batch_size = 100
+
+reg_constant = 0.1
+
+X_train = X_train.astype(np.float32).reshape(-1, height*width*channels) / 255.0
+X_test = X_test.astype(np.float32).reshape(-1, height*width*channels) / 255.0
+y_train = y_train.astype(np.int32).reshape(-1)
+y_test = y_test.astype(np.int32).reshape(-1)
+split = X_test.shape[0]//2
+X_valid, X_test = X_test[:split], X_test[split:]
+y_valid, y_test = y_test[:split], y_test[split:]
+
+# to make this notebook's output stable across runs
+def reset_graph(seed=seed):
+    tf.reset_default_graph()
+    tf.set_random_seed(seed)
+    np.random.seed(seed)
+reset_graph()
+
+def shuffle_batch(X, y, batch_size):
+    rnd_idx = np.random.permutation(len(X))
+    n_batches = len(X) // batch_size
+    for batch_idx in np.array_split(rnd_idx, n_batches):
+        X_batch, y_batch = X[batch_idx], y[batch_idx]
+        yield X_batch, y_batch
+
+now = datetime.datetime.now().strftime('%Y%m%d%d%H%M%S')
+rootLogDir = 'logs'
+logDir = '{}/run-{}/'.format(rootLogDir, now)
+
+with tf.name_scope("regularizer"):
+    #regularizer = tf.contrib.layers.l2_regularizer(scale=0.1)
+    regularizer = tf.contrib.layers.l1_regularizer(scale=0.0)
+
+with tf.name_scope("inputs"):
+    X = tf.placeholder(tf.float32, shape=[None, n_inputs], name="X")
+    X_reshaped = tf.reshape(X, shape=[-1, height, width, channels])
+    y = tf.placeholder(tf.int32, shape=[None], name="y")
+
+'''
+with tf.name_scope("conv1"):
+    conv1 = tf.layers.conv2d(X_reshaped, filters=conv1_fmaps, kernel_size=conv1_ksize,
+                             strides=conv1_stride, padding=conv1_pad,
+                             activation=tf.nn.selu, name="conv1",
+                             kernel_regularizer=regularizer,
+                             bias_regularizer=regularizer)
+
+with tf.name_scope("conv2"):
+    conv2 = tf.layers.conv2d(conv1, filters=conv2_fmaps, kernel_size=conv2_ksize,
+                             strides=conv2_stride, padding=conv2_pad,
+                             activation=tf.nn.selu, name="conv2",
+                             kernel_regularizer=regularizer,
+                             bias_regularizer=regularizer)
+
+with tf.name_scope("pool3"):
+    pool3 = tf.layers.max_pooling2d(conv2, pool_size=pool3_pool_size, strides=pool3_strides, padding=pool3_padding)
+    pool3_flat = tf.reshape(pool3, shape=[-1, pool3_fmaps*pool3_fmaps_mul*pool3_fmaps_mul])
+
+with tf.name_scope("fc1"):
+    fc1 = tf.layers.dense(pool3_flat, n_fc1, activation=tf.nn.selu, name="fc1",
+    kernel_regularizer=regularizer,
+    bias_regularizer=regularizer)
+
+with tf.name_scope("fc2"):
+    fc2 = tf.layers.dense(fc1, n_fc2, activation=tf.nn.selu, name="fc2",
+    kernel_regularizer=regularizer,
+    bias_regularizer=regularizer)
+
+with tf.name_scope("fc3"):
+    fc3 = tf.layers.dense(fc2, n_fc3, activation=tf.nn.selu, name="fc3",
+    kernel_regularizer=regularizer,
+    bias_regularizer=regularizer)
+
+with tf.name_scope("output"):
+    logits = tf.layers.dense(fc3, n_outputs, name="output")
+
+with tf.name_scope("probs")
+    Y_prob = tf.nn.softmax(logits, name="Y_prob")
+
+with tf.name_scope("train"):
+    xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y)
+    loss = tf.reduce_mean(xentropy) + reg_constant*tf.losses.get_regularization_loss()
+    optimizer = tf.train.AdamOptimizer()
+    training_op = optimizer.minimize(loss)
+
+with tf.name_scope("eval"):
+    correct = tf.nn.in_top_k(logits, y, 1)
+    accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+
+with tf.name_scope('tensorboard') as scope:
+    lossSummary = tf.summary.scalar('Loss', loss)
+    accuracySummary = tf.summary.scalar('Accuracy', accuracy)
+    fileWriter = tf.summary.FileWriter(logDir, tf.get_default_graph())
+
+with tf.name_scope("init_and_save"):
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+with tf.Session() as sess:
+    init.run()
+    for epoch in range(n_epochs):
+        for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+            sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+        acc_batch = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
+        acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+        print(epoch, "Last batch accuracy:", acc_batch, "Validation accuracy:", acc_valid)
+        save_path = saver.save(sess, "./cifar10_model")
+        lossSummaryStr = lossSummary.eval(feed_dict={X: X_batch, y: y_batch})
+        accuracySummaryStr = accuracySummary.eval(feed_dict={X: X_batch, y: y_batch})
+        fileWriter.add_summary(lossSummaryStr, epoch)
+        fileWriter.add_summary(accuracySummaryStr, epoch)
+    acc_test = accuracy.eval(feed_dict={X: X_valid, y: y_test})
+    print(epoch, "Last batch accuracy:", acc_batch, "Test accuracy:", acc_test)
+fileWriter.close()
