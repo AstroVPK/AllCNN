@@ -49,7 +49,7 @@ rootLogDir = 'logs'
 logDir = '{}/run-{}/'.format(rootLogDir, now)
 
 with tf.name_scope("activation"):
-    activation = tf.nn.relu
+    activation = tf.nn.selu
 
 with tf.name_scope("regularizer"):
     #regularizer = None
@@ -131,134 +131,136 @@ def AllCNN(X, y, regularizer=regularizer, kernel_init=kernel_init, bias_init=bia
                                   training=True,
                                   name="drop1")
 
-    with tf.name_scope("block1"):
-        conv1 = tf.layers.conv2d(drop1,
-                                 filters=conv1_fmaps,
-                                 kernel_size=conv1_ksize,
-                                 strides=conv1_stride,
-                                 padding=conv1_pad,
-                                 activation=conv1_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv1")
+    with tf.device('/gpu:0'):
+        with tf.name_scope("block1"):
+            conv1 = tf.layers.conv2d(drop1,
+                                     filters=conv1_fmaps,
+                                     kernel_size=conv1_ksize,
+                                     strides=conv1_stride,
+                                     padding=conv1_pad,
+                                     activation=conv1_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv1")
 
-        conv2 = tf.layers.conv2d(conv1,
-                                 filters=conv1_fmaps,
-                                 kernel_size=conv2_ksize,
-                                 strides=conv2_stride,
-                                 padding=conv2_pad,
-                                 activation=conv2_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv2")
+            conv2 = tf.layers.conv2d(conv1,
+                                     filters=conv1_fmaps,
+                                     kernel_size=conv2_ksize,
+                                     strides=conv2_stride,
+                                     padding=conv2_pad,
+                                     activation=conv2_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv2")
 
-        conv3 = tf.layers.conv2d(conv2,
-                                 filters=conv3_fmaps,
-                                 kernel_size=conv3_ksize,
-                                 strides=conv3_stride,
-                                 padding=conv3_pad,
-                                 activation=conv3_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv3")
+            conv3 = tf.layers.conv2d(conv2,
+                                     filters=conv3_fmaps,
+                                     kernel_size=conv3_ksize,
+                                     strides=conv3_stride,
+                                     padding=conv3_pad,
+                                     activation=conv3_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv3")
 
-        drop2 = tf.layers.dropout(conv3,
-                                  rate=0.5,
-                                  training=True,
-                                  name="drop2")
+            drop2 = tf.layers.dropout(conv3,
+                                      rate=0.5,
+                                      training=True,
+                                      name="drop2")
 
-    with tf.name_scope("block2"):
-        conv4 = tf.layers.conv2d(drop2,
-                                 filters=conv4_fmaps,
-                                 kernel_size=conv4_ksize,
-                                 strides=conv4_stride,
-                                 padding=conv4_pad,
-                                 activation=conv4_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv4")
+    with tf.device('/gpu:1'):
+        with tf.name_scope("block2"):
+            conv4 = tf.layers.conv2d(drop2,
+                                     filters=conv4_fmaps,
+                                     kernel_size=conv4_ksize,
+                                     strides=conv4_stride,
+                                     padding=conv4_pad,
+                                     activation=conv4_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv4")
 
-        conv5 = tf.layers.conv2d(conv4,
-                                 filters=conv5_fmaps,
-                                 kernel_size=conv5_ksize,
-                                 strides=conv5_stride,
-                                 padding=conv5_pad,
-                                 activation=conv5_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv5")
+            conv5 = tf.layers.conv2d(conv4,
+                                     filters=conv5_fmaps,
+                                     kernel_size=conv5_ksize,
+                                     strides=conv5_stride,
+                                     padding=conv5_pad,
+                                     activation=conv5_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv5")
 
-        conv6 = tf.layers.conv2d(conv5,
-                                 filters=conv6_fmaps,
-                                 kernel_size=conv6_ksize,
-                                 strides=conv6_stride,
-                                 padding=conv6_pad,
-                                 activation=conv6_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv6")
+            conv6 = tf.layers.conv2d(conv5,
+                                     filters=conv6_fmaps,
+                                     kernel_size=conv6_ksize,
+                                     strides=conv6_stride,
+                                     padding=conv6_pad,
+                                     activation=conv6_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv6")
 
-        drop3 = tf.layers.dropout(conv6,
-                                  rate=0.5,
-                                  training=True,
-                                  name="drop3")
+            drop3 = tf.layers.dropout(conv6,
+                                      rate=0.5,
+                                      training=True,
+                                      name="drop3")
 
+    with tf.device('/gpu:1'):
+        with tf.name_scope("block3"):
+            conv7 = tf.layers.conv2d(drop3,
+                                     filters=conv7_fmaps,
+                                     kernel_size=conv7_ksize,
+                                     strides=conv7_stride,
+                                     padding=conv7_pad,
+                                     activation=conv7_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv7")
 
-    with tf.name_scope("block3"):
-        conv7 = tf.layers.conv2d(drop3,
-                                 filters=conv7_fmaps,
-                                 kernel_size=conv7_ksize,
-                                 strides=conv7_stride,
-                                 padding=conv7_pad,
-                                 activation=conv7_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv7")
+            conv8 = tf.layers.conv2d(conv7,
+                                     filters=conv8_fmaps,
+                                     kernel_size=conv8_ksize,
+                                     strides=conv8_stride,
+                                     padding=conv8_pad,
+                                     activation=conv8_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv8")
 
-        conv8 = tf.layers.conv2d(conv7,
-                                 filters=conv8_fmaps,
-                                 kernel_size=conv8_ksize,
-                                 strides=conv8_stride,
-                                 padding=conv8_pad,
-                                 activation=conv8_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv8")
+            conv9 = tf.layers.conv2d(conv8,
+                                     filters=conv9_fmaps,
+                                     kernel_size=conv9_ksize,
+                                     strides=conv9_stride,
+                                     padding=conv9_pad,
+                                     activation=conv9_act,
+                                     kernel_initializer=kernel_init,
+                                     bias_initializer=bias_init,
+                                     kernel_regularizer=regularizer,
+                                     bias_regularizer=regularizer,
+                                     name="conv9")
 
-        conv9 = tf.layers.conv2d(conv8,
-                                 filters=conv9_fmaps,
-                                 kernel_size=conv9_ksize,
-                                 strides=conv9_stride,
-                                 padding=conv9_pad,
-                                 activation=conv9_act,
-                                 kernel_initializer=kernel_init,
-                                 bias_initializer=bias_init,
-                                 kernel_regularizer=regularizer,
-                                 bias_regularizer=regularizer,
-                                 name="conv9")
-
-    with tf.name_scope("gap"):
-        gap10 = tf.layers.average_pooling2d(conv9,
-                                            pool_size=gap10_psize,
-                                            strides=gap10_stride,
-                                            padding=gap10_pad,
-                                            name="gap10")
+        with tf.name_scope("gap"):
+            gap10 = tf.layers.average_pooling2d(conv9,
+                                                pool_size=gap10_psize,
+                                                strides=gap10_stride,
+                                                padding=gap10_pad,
+                                                name="gap10")
 
         logits = tf.reshape(gap10, shape=[-1, n_outputs], name="flatten")
 
@@ -266,8 +268,9 @@ def AllCNN(X, y, regularizer=regularizer, kernel_init=kernel_init, bias_init=bia
 
 logits = AllCNN(X_reshaped, y, regularizer=regularizer, kernel_init=kernel_init, bias_init=bias_init, activation=activation)
 
-with tf.name_scope("probs"):
-    y_prob = tf.nn.softmax(logits, name="Y_prob")
+with tf.device('/cpu:0'):
+    with tf.name_scope("probs"):
+        y_prob = tf.nn.softmax(logits, name="Y_prob")
 
 with tf.name_scope("train"):
     xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y)
@@ -291,7 +294,9 @@ with tf.name_scope("init_and_save"):
     saver = tf.train.Saver()
 
 S_curr = 0
-with tf.Session() as sess:
+config = tf.ConfigProto()
+config.allow_soft_placement=True
+with tf.Session(config=config) as sess:
     init.run()
     for epoch in range(n_epochs):
         for ctr, (X_batch, y_batch) in enumerate(shuffle_batch(X_train, y_train, batch_size)):
